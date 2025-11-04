@@ -6,19 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:init": "tsx src/scripts/init-db.ts"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
+    "@neondatabase/serverless": "^1.0.2",
+    "@vercel/postgres": "^0.10.0",
+    "date-fns": "^4.1.0",
+    "next": "16.0.1",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "next": "16.0.1"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1"
+    "eslint-config-next": "16.0.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
   }
 }
