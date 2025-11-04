@@ -12,12 +12,21 @@ The I-9 Voice Assistant is an innovative solution that allows employees to compl
 - Offers multilingual support potential
 
 **Key Features:**
-- 📞 Voice-driven form completion via phone calls
-- 🤖 Intelligent conversation flow with context awareness
-- 💾 Real-time data validation and persistence
-- 📊 Progress tracking and form completion status
-- 🔄 Seamless integration with existing HR systems
-- 🛡️ Secure data handling with validation
+- Voice-driven form completion via phone calls
+- Intelligent conversation flow with context awareness
+- Real-time data validation and persistence
+- Progress tracking and form completion status
+- Seamless integration with existing HR systems
+- Secure data handling with validation
+
+## Current Status
+
+- ✅ Backend APIs complete
+- ✅ Database schema deployed
+- ✅ MCP server operational
+- ⏳ Telnyx account setup pending
+- ⏳ Voice AI configuration pending
+- 🚧 Frontend dashboard in progress
 
 ## Architecture
 
@@ -40,7 +49,7 @@ The I-9 Voice Assistant is an innovative solution that allows employees to compl
 - **Database**: Neon Postgres with connection pooling
 - **AI**: Telnyx Voice AI with MCP integration
 - **Validation**: Zod schemas with custom validators
-- **Deployment**: Vercel (planned)
+- **Deployment**: Vercel - https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app
 - **Development**: tsx, ESLint, TypeScript
 
 ## Features
@@ -205,6 +214,16 @@ Required variables for `.env.local`:
 - Connection pooling handled by @vercel/postgres
 - Run `npm run db:init` on first deployment
 
+## Quick Start (For Demo/Testing)
+
+```bash
+# Test the deployed API
+curl https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app/api/mcp
+
+# Test webhook endpoint
+curl "https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app/api/webhook/caller-context?phone=%2B1234567890"
+```
+
 ## Usage
 
 ### For End Users (Phone Calls)
@@ -306,12 +325,12 @@ Use tools like Postman, Insomnia, or curl to test all endpoints with the example
 ## Future Enhancements
 
 **Phase 2 Features:**
-- 📄 Section 2 employer verification workflow
-- 📎 Document upload via MMS integration
-- 🌍 Multi-language support (Spanish, etc.)
-- 📱 SMS confirmations and reminders
-- 🎛️ Admin dashboard for HR management
-- 📊 Analytics and compliance reporting
+- Section 2 employer verification workflow
+- Document upload via MMS integration
+- Multi-language support (Spanish, etc.)
+- SMS confirmations and reminders
+- Admin dashboard for HR management
+- Analytics and compliance reporting
 
 **Technical Improvements:**
 - Redis caching for frequently accessed data
@@ -376,6 +395,8 @@ MIT License - see LICENSE file for details
 ## Contact
 
 **Ashitha Gowda**  
+- GitHub: ashithapgowda
+- Challenge Submission Date: November 4, 2025  
 Built for Telnyx Coding Challenge 2025
 
 ---
