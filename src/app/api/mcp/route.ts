@@ -9,7 +9,8 @@ import {
   executeSaveI9Field,
   executeGetI9Progress,
   executeGetEmployeeByPhone,
-  executeCompleteI9Section1
+  executeCompleteI9Section1,
+  executeZipLookup
 } from '@/lib/mcp-tools';
 
 // Create MCP Server instance
@@ -33,6 +34,7 @@ const toolExecutors = {
   get_i9_progress: executeGetI9Progress,
   get_employee_by_phone: executeGetEmployeeByPhone,
   complete_i9_section1: executeCompleteI9Section1,
+  lookup_city_state_from_zip: executeZipLookup,
 };
 
 // Register tool handlers
