@@ -109,6 +109,21 @@ export const tools = {
       },
       required: ['employee_id']
     }
+  },
+
+  lookup_city_state_from_zip: {
+    name: 'lookup_city_state_from_zip',
+    description: 'Look up city and state from a ZIP code to auto-fill address fields',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        zip_code: {
+          type: 'string',
+          description: '5-digit US ZIP code'
+        }
+      },
+      required: ['zip_code']
+    }
   }
 };
 
@@ -379,6 +394,67 @@ export async function executeCompleteI9Section1(args: { employee_id: string }): 
     return {
       success: false,
       error: `Failed to complete form: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+export async function executeZipLookup(args: { zip_code: string }): Promise<ToolResponse> {
+  try {
+    // Validate ZIP code format (5 digits)
+    const zipRegex = /^\d{5}$/;
+    if (!zipRegex.test(args.zip_code)) {
+      return {
+        success: false,
+        error: 'Invalid ZIP code format. Must be 5 digits.'
+      };
+    }
+
+    // Call Zippopotamus API
+    const response = await fetch(`https://api.zippopotam.us/us/${args.zip_code}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return {
+          success: false,
+          error: 'ZIP code not found'
+        };
+      }
+      return {
+        success: false,
+        error: `API error: ${response.status} ${response.statusText}`
+      };
+    }
+
+    const data = await response.json();
+    
+    // Extract city and state from response
+    if (!data.places || data.places.length === 0) {
+      return {
+        success: false,
+        error: 'No location data found for this ZIP code'
+      };
+    }
+
+    const place = data.places[0];
+    const city = place['place name'];
+    const state_abbr = place['state abbreviation'];
+    const state_full = place['state'];
+
+    return {
+      success: true,
+      data: {
+        zip_code: args.zip_code,
+        city: city,
+        state: state_full,
+        state_abbr: state_abbr,
+        country: data.country
+      }
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to lookup ZIP code: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
 }

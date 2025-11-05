@@ -9,7 +9,8 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Paper
+  Paper,
+  Snackbar
 } from '@mui/material';
 import {
   Assignment as AssignmentIcon,
@@ -27,6 +28,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedForm, setSelectedForm] = useState<I9Form | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info';
+  }>({ open: false, message: '', severity: 'info' });
 
   // Stats calculations
   const totalForms = forms.length;
@@ -138,7 +145,10 @@ export default function Home() {
   };
 
   const handleApprove = async (form: I9Form) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const response = await fetch(`/api/i9/${form.id}?action=approve-data`, {
         method: 'PATCH',
         headers: {
@@ -155,15 +165,29 @@ export default function Home() {
 
       // Refresh data
       await fetchForms();
-      alert(`Form approved for ${form.first_name} ${form.last_name}`);
+      setSnackbar({
+        open: true,
+        message: `Form approved for ${form.first_name} ${form.last_name}`,
+        severity: 'success'
+      });
+      setSelectedForm(null); // Close modal
     } catch (err) {
       console.error('Error approving form:', err);
-      alert('Failed to approve form. Please try again.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to approve form. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleReject = async (form: I9Form, notes: string) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const response = await fetch(`/api/i9/${form.id}?action=request-corrections`, {
         method: 'PATCH',
         headers: {
@@ -181,10 +205,21 @@ export default function Home() {
 
       // Refresh data
       await fetchForms();
-      alert(`Corrections requested for ${form.first_name} ${form.last_name}`);
+      setSnackbar({
+        open: true,
+        message: `Corrections requested for ${form.first_name} ${form.last_name}`,
+        severity: 'success'
+      });
+      setSelectedForm(null); // Close modal
     } catch (err) {
       console.error('Error requesting corrections:', err);
-      alert('Failed to request corrections. Please try again.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to request corrections. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -194,7 +229,10 @@ export default function Home() {
   };
 
   const handleVerify = async (form: I9Form) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const response = await fetch(`/api/i9/${form.id}?action=verify-final`, {
         method: 'PATCH',
         headers: {
@@ -211,15 +249,29 @@ export default function Home() {
 
       // Refresh data
       await fetchForms();
-      alert(`Form verified for ${form.first_name} ${form.last_name}`);
+      setSnackbar({
+        open: true,
+        message: `Form verified for ${form.first_name} ${form.last_name}`,
+        severity: 'success'
+      });
+      setSelectedForm(null); // Close modal
     } catch (err) {
       console.error('Error verifying form:', err);
-      alert('Failed to verify form. Please try again.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to verify form. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDownloadPdf = async (form: I9Form) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const response = await fetch(`/api/i9/${form.id}/pdf`);
       
       if (!response.ok) {
@@ -230,10 +282,21 @@ export default function Home() {
       console.log('PDF data:', data);
       
       // TODO: Implement actual PDF download when pdf-lib is integrated
-      alert(`PDF generated for ${form.first_name} ${form.last_name}. Check console for data.`);
+      setSnackbar({
+        open: true,
+        message: `PDF generated for ${form.first_name} ${form.last_name}`,
+        severity: 'success'
+      });
+      setSelectedForm(null); // Close modal
     } catch (err) {
       console.error('Error downloading PDF:', err);
-      alert('Failed to download PDF. Please try again.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to download PDF. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -336,7 +399,24 @@ export default function Home() {
           onReject={handleReject}
           onVerify={handleVerify}
           onDownloadPdf={handleDownloadPdf}
+          loading={actionLoading}
         />
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert 
+            severity={snackbar.severity} 
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </Box>
   );

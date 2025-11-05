@@ -8,6 +8,8 @@ export enum CitizenshipStatus {
 export enum I9FormStatus {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
+  NEEDS_CORRECTION = 'needs_correction',
+  DATA_APPROVED = 'data_approved',
   VERIFIED = 'verified'
 }
 
@@ -55,6 +57,14 @@ export interface I9Form {
   // Metadata
   status: I9FormStatus;
   completed_at?: Date;
+  
+  // Workflow fields
+  employer_notes?: string;
+  employer_reviewed_at?: Date;
+  employer_reviewed_by?: string;
+  employee_signature_date?: Date;
+  employee_signature_method?: string;
+  
   created_at: Date;
   updated_at: Date;
 }

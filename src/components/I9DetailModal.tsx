@@ -6,14 +6,14 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Grid,
   Card,
   CardContent,
   Typography,
   Box,
   Chip,
   Alert,
-  IconButton
+  IconButton,
+  CircularProgress
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -34,6 +34,7 @@ interface I9DetailModalProps {
   onReject: (form: I9Form, notes: string) => void;
   onVerify: (form: I9Form) => void;
   onDownloadPdf: (form: I9Form) => void;
+  loading?: boolean;
 }
 
 const getCitizenshipStatusDisplay = (status: CitizenshipStatus) => {
@@ -76,7 +77,8 @@ export default function I9DetailModal({
   onApprove,
   onReject,
   onVerify,
-  onDownloadPdf
+  onDownloadPdf,
+  loading = false
 }: I9DetailModalProps) {
   const [correctionDialogOpen, setCorrectionDialogOpen] = useState(false);
 
@@ -113,7 +115,20 @@ export default function I9DetailModal({
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { minHeight: '70vh' }
+          sx: { 
+            minHeight: '70vh',
+            backgroundColor: '#fff',
+            zIndex: 1300
+          }
+        }}
+        BackdropProps={{
+          sx: {
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 1299
+          }
+        }}
+        sx={{
+          zIndex: 1301
         }}
       >
         <DialogTitle>
@@ -128,148 +143,146 @@ export default function I9DetailModal({
         </DialogTitle>
 
         <DialogContent dividers>
-          <Grid container spacing={3}>
+          <Box display="flex" flexDirection="column" gap={3}>
             {/* Personal Information */}
-            <Grid item xs={12}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Personal Information
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Personal Information
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    <Box flex="1" minWidth="200px">
                       <InfoField label="First Name" value={form.first_name} />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                    <Box flex="1" minWidth="200px">
                       <InfoField label="Last Name" value={form.last_name} />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                    <Box flex="1" minWidth="200px">
                       <InfoField label="Middle Initial" value={form.middle_initial} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+                    </Box>
+                  </Box>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    <Box flex="1" minWidth="250px">
                       <InfoField label="Other Last Names" value={form.other_last_names} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+                    </Box>
+                    <Box flex="1" minWidth="250px">
                       <InfoField label="Date of Birth" value={formatDate(form.date_of_birth)} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+                    </Box>
+                  </Box>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    <Box flex="1" minWidth="250px">
                       <InfoField label="Social Security Number" value={form.ssn ? '***-**-' + form.ssn.slice(-4) : undefined} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+                    </Box>
+                    <Box flex="1" minWidth="250px">
                       <InfoField label="Employee ID" value={form.employee_id} />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
 
             {/* Address Information */}
-            <Grid item xs={12}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Address Information
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={8}>
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Address Information
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    <Box flex="2" minWidth="300px">
                       <InfoField label="Street Address" value={form.address} />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                    <Box flex="1" minWidth="150px">
                       <InfoField label="Apartment Number" value={form.apt_number} />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                  </Box>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    <Box flex="1" minWidth="150px">
                       <InfoField label="City" value={form.city} />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                    <Box flex="1" minWidth="100px">
                       <InfoField label="State" value={form.state} />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                    <Box flex="1" minWidth="120px">
                       <InfoField label="ZIP Code" value={form.zip_code} />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
 
             {/* Contact Information */}
-            <Grid item xs={12}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Contact Information
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <InfoField label="Email Address" value={form.email} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <InfoField label="Phone Number" value={form.phone} />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Contact Information
+                </Typography>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box flex="1" minWidth="250px">
+                    <InfoField label="Email Address" value={form.email} />
+                  </Box>
+                  <Box flex="1" minWidth="250px">
+                    <InfoField label="Phone Number" value={form.phone} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
 
             {/* Citizenship Status */}
-            <Grid item xs={12}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Citizenship Status
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Citizenship Status
+                </Typography>
+                <Box mb={2}>
+                  <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 1 }}>
+                    Citizenship/Immigration Status
                   </Typography>
-                  <Box mb={2}>
-                    <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 1 }}>
-                      Citizenship/Immigration Status
-                    </Typography>
-                    <Chip
-                      label={citizenshipDisplay.label}
-                      color={citizenshipDisplay.color}
-                      variant="filled"
-                      size="medium"
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                  <Chip
+                    label={citizenshipDisplay.label}
+                    color={citizenshipDisplay.color}
+                    variant="filled"
+                    size="medium"
+                  />
+                </Box>
+              </CardContent>
+            </Card>
 
             {/* Form Status & Timestamps */}
-            <Grid item xs={12}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Form Status & Timeline
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <InfoField label="Created" value={formatDateTime(form.created_at)} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <InfoField label="Last Updated" value={formatDateTime(form.updated_at)} />
-                    </Grid>
-                    {form.completed_at && (
-                      <Grid item xs={12} sm={6}>
-                        <InfoField label="Completed" value={formatDateTime(form.completed_at)} />
-                      </Grid>
-                    )}
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Form Status & Timeline
+                </Typography>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box flex="1" minWidth="250px">
+                    <InfoField label="Created" value={formatDateTime(form.created_at)} />
+                  </Box>
+                  <Box flex="1" minWidth="250px">
+                    <InfoField label="Last Updated" value={formatDateTime(form.updated_at)} />
+                  </Box>
+                  {form.completed_at && (
+                    <Box flex="1" minWidth="250px">
+                      <InfoField label="Completed" value={formatDateTime(form.completed_at)} />
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
 
             {/* Employer Notes (if any) */}
             {form.status === I9FormStatus.NEEDS_CORRECTION && form.employer_notes && (
-              <Grid item xs={12}>
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Correction Notes:
-                  </Typography>
-                  <Typography variant="body2">
-                    {form.employer_notes}
-                  </Typography>
-                </Alert>
-              </Grid>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Correction Notes:
+                </Typography>
+                <Typography variant="body2">
+                  {form.employer_notes}
+                </Typography>
+              </Alert>
             )}
-          </Grid>
+          </Box>
         </DialogContent>
 
         <DialogActions sx={{ p: 3, gap: 1 }}>
@@ -279,19 +292,18 @@ export default function I9DetailModal({
               <Button
                 variant="contained"
                 color="success"
-                startIcon={<ApproveIcon />}
-                onClick={() => {
-                  onApprove(form);
-                  onClose();
-                }}
+                startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <ApproveIcon />}
+                onClick={() => onApprove(form)}
+                disabled={loading}
               >
-                Approve Data
+                {loading ? 'Approving...' : 'Approve Data'}
               </Button>
               <Button
                 variant="contained"
                 color="warning"
                 startIcon={<EditIcon />}
                 onClick={handleRejectClick}
+                disabled={loading}
               >
                 Request Corrections
               </Button>
@@ -302,13 +314,11 @@ export default function I9DetailModal({
             <Button
               variant="contained"
               color="secondary"
-              startIcon={<VerifyIcon />}
-              onClick={() => {
-                onVerify(form);
-                onClose();
-              }}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <VerifyIcon />}
+              onClick={() => onVerify(form)}
+              disabled={loading}
             >
-              Verify Final
+              {loading ? 'Verifying...' : 'Verify Final'}
             </Button>
           )}
 
@@ -316,17 +326,19 @@ export default function I9DetailModal({
             <Button
               variant="contained"
               color="primary"
-              startIcon={<DownloadIcon />}
-              onClick={() => {
-                onDownloadPdf(form);
-                onClose();
-              }}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
+              onClick={() => onDownloadPdf(form)}
+              disabled={loading}
             >
-              Download PDF
+              {loading ? 'Generating...' : 'Download PDF'}
             </Button>
           )}
 
-          <Button variant="outlined" onClick={onClose}>
+          <Button 
+            variant="outlined" 
+            onClick={onClose}
+            disabled={loading}
+          >
             Close
           </Button>
         </DialogActions>

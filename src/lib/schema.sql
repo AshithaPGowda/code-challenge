@@ -55,9 +55,17 @@ CREATE TABLE IF NOT EXISTS i9_forms (
     
     -- Metadata
     status VARCHAR(20) DEFAULT 'in_progress' CHECK (
-        status IN ('in_progress', 'completed', 'verified')
+        status IN ('in_progress', 'completed', 'verified', 'needs_correction', 'data_approved')
     ),
     completed_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Workflow fields
+    employer_notes TEXT,
+    employer_reviewed_at TIMESTAMP WITH TIME ZONE,
+    employer_reviewed_by VARCHAR(255),
+    employee_signature_date TIMESTAMP WITH TIME ZONE,
+    employee_signature_method VARCHAR(50),
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
