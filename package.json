@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:init": "tsx src/scripts/init-db.ts",
-    "db:seed": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/seed-test-data.ts"
+    "db:seed": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/seed-test-data.ts",
+    "inspect:pdf": "tsx src/scripts/inspect-pdf-fields.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
