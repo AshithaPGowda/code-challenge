@@ -41,91 +41,33 @@ export default function Home() {
   const needsCorrection = forms.filter(f => f.status === I9FormStatus.NEEDS_CORRECTION).length;
   const verified = forms.filter(f => f.status === I9FormStatus.VERIFIED).length;
 
-  // Fetch all I-9 forms
+  // Fetch all I-9 forms from database
   const fetchForms = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // For demo purposes, we'll show an empty state since we don't have a "get all forms" endpoint yet
-      // In a real implementation, you'd create a new endpoint like /api/i9/all
-      // For now, let's create some mock data to show the dashboard functionality
+      // Fetch from real API endpoint
+      const response = await fetch('/api/i9');
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        throw new Error(`Failed to fetch forms: ${response.status}`);
+      }
       
-      // Mock data for demonstration
-      const mockForms: I9Form[] = [
-        {
-          id: '1',
-          employee_id: 'emp-1',
-          first_name: 'John',
-          last_name: 'Doe',
-          middle_initial: 'M',
-          other_last_names: '',
-          address: '123 Main St',
-          apt_number: '4B',
-          city: 'New York',
-          state: 'NY',
-          zip_code: '10001',
-          date_of_birth: new Date('1990-01-15'),
-          ssn: '123-45-6789',
-          email: 'john.doe@example.com',
-          phone: '+1-555-0123',
-          citizenship_status: 'us_citizen' as any,
-          status: 'completed' as any,
-          completed_at: new Date('2025-11-03T10:30:00Z'),
-          created_at: new Date('2025-11-03T09:15:00Z'),
-          updated_at: new Date('2025-11-03T10:30:00Z')
-        },
-        {
-          id: '2',
-          employee_id: 'emp-2',
-          first_name: 'Jane',
-          last_name: 'Smith',
-          middle_initial: undefined,
-          other_last_names: '',
-          address: '456 Oak Ave',
-          apt_number: undefined,
-          city: 'Los Angeles',
-          state: 'CA',
-          zip_code: '90210',
-          date_of_birth: new Date('1985-05-20'),
-          ssn: undefined,
-          email: 'jane.smith@example.com',
-          phone: '+1-555-0456',
-          citizenship_status: 'lawful_permanent_resident' as any,
-          status: 'data_approved' as any,
-          completed_at: new Date('2025-11-02T14:20:00Z'),
-          created_at: new Date('2025-11-02T13:45:00Z'),
-          updated_at: new Date('2025-11-02T15:10:00Z')
-        },
-        {
-          id: '3',
-          employee_id: 'emp-3',
-          first_name: 'Carlos',
-          last_name: 'Rodriguez',
-          middle_initial: 'A',
-          other_last_names: '',
-          address: '789 Pine Rd',
-          apt_number: '12A',
-          city: 'Miami',
-          state: 'FL',
-          zip_code: '33101',
-          date_of_birth: new Date('1992-08-10'),
-          ssn: undefined,
-          email: 'carlos.rodriguez@example.com',
-          phone: '+1-555-0789',
-          citizenship_status: 'authorized_alien' as any,
-          status: 'needs_correction' as any,
-          employer_notes: 'Please verify address details',
-          completed_at: new Date('2025-11-01T16:45:00Z'),
-          created_at: new Date('2025-11-01T16:20:00Z'),
-          updated_at: new Date('2025-11-01T17:30:00Z')
-        }
-      ];
+      const data = await response.json();
       
-      setForms(mockForms);
+      // Transform database dates back to Date objects
+      const transformedForms = data.map((form: any) => ({
+        ...form,
+        date_of_birth: new Date(form.date_of_birth),
+        created_at: new Date(form.created_at),
+        updated_at: new Date(form.updated_at),
+        completed_at: form.completed_at ? new Date(form.completed_at) : null,
+        employer_reviewed_at: form.employer_reviewed_at ? new Date(form.employer_reviewed_at) : null,
+        employee_signature_date: form.employee_signature_date ? new Date(form.employee_signature_date) : null
+      }));
+      
+      setForms(transformedForms);
     } catch (err) {
       console.error('Error fetching forms:', err);
       setError('Failed to load I-9 forms. Please try again.');
