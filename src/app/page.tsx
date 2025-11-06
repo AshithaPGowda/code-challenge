@@ -250,7 +250,7 @@ export default function Home() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             I-9 Employer Dashboard
           </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
+          <Typography variant="h6" sx={{ opacity: 0.8 }}>
             Telnyx Voice Assistant
           </Typography>
         </Toolbar>
@@ -304,8 +304,8 @@ export default function Home() {
         </Box>
 
         {/* I-9 Forms Header */}
-        <Paper elevation={3} sx={{ p: 1, mb: 1 }}>
-          <Typography variant="h6" gutterBottom>
+        <Paper elevation={3} sx={{ p: 4, mb: 4, bgcolor: 'background.paper' }}>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
             I-9 Forms
           </Typography>
           <Typography variant="body2" color="textSecondary">
