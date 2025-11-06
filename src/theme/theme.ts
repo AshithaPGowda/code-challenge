@@ -37,7 +37,7 @@ export const theme = createTheme({
     },
     background: {
       default: '#ffffff',   // Cream background
-      paper: '#03a79121',     // White for cards/papers
+      paper: '#d7e4db21',     // White for cards/papers
     },
     text: {
       primary: '#2C3E50',   // Dark blue-gray for readability
