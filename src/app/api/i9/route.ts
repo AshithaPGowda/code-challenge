@@ -84,42 +84,48 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get('employee_id');
     
-    if (!employeeId) {
-      return NextResponse.json(
-        { error: 'Employee ID is required as query parameter' },
-        { status: 400 }
+    // If employee_id is provided, get forms for specific employee
+    if (employeeId) {
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(employeeId)) {
+        return NextResponse.json(
+          { error: 'Invalid employee ID format' },
+          { status: 400 }
+        );
+      }
+      
+      // Check if employee exists
+      const employeeCheck = await query(
+        'SELECT id FROM employees WHERE id = $1',
+        [employeeId]
       );
+      
+      if (employeeCheck.rows.length === 0) {
+        return NextResponse.json(
+          { error: 'Employee not found' },
+          { status: 404 }
+        );
+      }
+      
+      // Get all I-9 forms for the specific employee
+      const result = await query(
+        'SELECT * FROM i9_forms WHERE employee_id = $1 ORDER BY created_at DESC',
+        [employeeId]
+      );
+      
+      const i9Forms: I9Form[] = result.rows;
+      return NextResponse.json(i9Forms, { status: 200 });
     }
     
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(employeeId)) {
-      return NextResponse.json(
-        { error: 'Invalid employee ID format' },
-        { status: 400 }
-      );
-    }
-    
-    // Check if employee exists
-    const employeeCheck = await query(
-      'SELECT id FROM employees WHERE id = $1',
-      [employeeId]
-    );
-    
-    if (employeeCheck.rows.length === 0) {
-      return NextResponse.json(
-        { error: 'Employee not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Get all I-9 forms for the employee
+    // If no employee_id, get ALL I-9 forms for dashboard
+    console.log('[API] Fetching all I-9 forms for dashboard');
     const result = await query(
-      'SELECT * FROM i9_forms WHERE employee_id = $1 ORDER BY created_at DESC',
-      [employeeId]
+      'SELECT * FROM i9_forms ORDER BY created_at DESC'
     );
     
     const i9Forms: I9Form[] = result.rows;
+    console.log(`[API] Found ${i9Forms.length} I-9 forms`);
     
     return NextResponse.json(i9Forms, { status: 200 });
     
