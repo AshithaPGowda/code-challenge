@@ -21,6 +21,19 @@ export interface Employee {
   updated_at: Date;
 }
 
+export interface Employer {
+  id: string;
+  company_name: string;
+  company_address: string;
+  company_city: string;
+  company_state: string;
+  company_zip: string;
+  hr_representative_name: string;
+  hr_representative_title: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface I9Form {
   id: string;
   employee_id: string;
