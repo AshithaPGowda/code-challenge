@@ -49,7 +49,7 @@ const getStatusChipProps = (status: I9FormStatus) => {
     case I9FormStatus.VERIFIED:
       return { color: 'success' as const, label: 'Verified' };
     case I9FormStatus.IN_PROGRESS:
-      return { color: 'default' as const, label: 'In Progress' };
+      return { color: 'info' as const, label: 'In Progress' };
     default:
       return { color: 'default' as const, label: status };
   }
