@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { fillI9PDF, createSampleEmployer } from '@/lib/pdf-filler';
 import type { I9Form } from '@/lib/types';
 
 interface RouteParams {
@@ -24,16 +25,12 @@ export async function GET(
       );
     }
     
-    // Get I-9 form with employee data
+    console.log(`[PDF API] Generating PDF for I-9 form ${id}`);
+    
+    // Get I-9 form data
     const result = await query(`
-      SELECT 
-        i9.*,
-        e.phone as employee_phone,
-        e.email as employee_email,
-        e.created_at as employee_created_at
-      FROM i9_forms i9
-      JOIN employees e ON i9.employee_id = e.id
-      WHERE i9.id = $1
+      SELECT * FROM i9_forms 
+      WHERE id = $1
     `, [id]);
     
     if (result.rows.length === 0) {
@@ -43,101 +40,47 @@ export async function GET(
       );
     }
     
-    const formData = result.rows[0];
-    
-    // Format the form data for PDF generation
-    const formattedData = {
-      // Form identification
-      form_id: formData.id,
-      employee_id: formData.employee_id,
-      
-      // Section 1: Employee Information and Attestation
-      section1: {
-        personal_info: {
-          last_name: formData.last_name,
-          first_name: formData.first_name,
-          middle_initial: formData.middle_initial,
-          other_last_names: formData.other_last_names
-        },
-        address: {
-          street_address: formData.address,
-          apt_number: formData.apt_number,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zip_code
-        },
-        personal_details: {
-          date_of_birth: formData.date_of_birth,
-          ssn: formData.ssn ? '***-**-' + formData.ssn.slice(-4) : null, // Masked for security
-          email: formData.email,
-          phone: formData.phone
-        },
-        citizenship_status: {
-          status: formData.citizenship_status,
-          uscis_a_number: formData.uscis_a_number,
-          alien_expiration_date: formData.alien_expiration_date,
-          form_i94_number: formData.form_i94_number,
-          foreign_passport_number: formData.foreign_passport_number,
-          country_of_issuance: formData.country_of_issuance
-        },
-        signature: {
-          signature_date: formData.employee_signature_date,
-          signature_method: formData.employee_signature_method || 'voice_verification'
-        }
-      },
-      
-      // Form metadata
-      metadata: {
-        status: formData.status,
-        completed_at: formData.completed_at,
-        created_at: formData.created_at,
-        updated_at: formData.updated_at
-      },
-      
-      // Workflow information
-      workflow: {
-        employer_notes: formData.employer_notes,
-        employer_reviewed_at: formData.employer_reviewed_at,
-        employer_reviewed_by: formData.employer_reviewed_by
-      },
-      
-      // Employee record info
-      employee_record: {
-        phone: formData.employee_phone,
-        email: formData.employee_email,
-        registered_at: formData.employee_created_at
-      }
+    const formData: I9Form = {
+      ...result.rows[0],
+      date_of_birth: new Date(result.rows[0].date_of_birth),
+      created_at: new Date(result.rows[0].created_at),
+      updated_at: new Date(result.rows[0].updated_at),
+      completed_at: result.rows[0].completed_at ? new Date(result.rows[0].completed_at) : null,
+      employer_reviewed_at: result.rows[0].employer_reviewed_at ? new Date(result.rows[0].employer_reviewed_at) : null,
+      employee_signature_date: result.rows[0].employee_signature_date ? new Date(result.rows[0].employee_signature_date) : null,
+      alien_expiration_date: result.rows[0].alien_expiration_date ? new Date(result.rows[0].alien_expiration_date) : null
     };
     
-    // Generate response
-    const response = {
-      form_data: formattedData,
-      status: formData.status,
-      generated_at: new Date().toISOString(),
-      note: "PDF generation coming next - this endpoint currently returns formatted form data ready for PDF conversion",
-      pdf_ready: false,
-      next_steps: [
-        "Integrate PDF generation library (pdf-lib, jsPDF, or Puppeteer)",
-        "Create I-9 form template with proper USCIS formatting",
-        "Add digital signature support",
-        "Implement secure PDF download with access controls"
-      ]
-    };
+    // Use sample employer data (in production, this would come from company database)
+    const employerData = createSampleEmployer();
     
-    console.log(`[PDF API] Form ${id} data retrieved for PDF generation`);
+    console.log(`[PDF API] Filling PDF for employee: ${formData.first_name} ${formData.last_name}`);
     
-    return NextResponse.json(response, {
+    // Generate the filled PDF
+    const pdfBytes = await fillI9PDF(formData, employerData);
+    
+    // Create filename
+    const filename = `I9-Form-${formData.last_name}-${formData.first_name}-${formData.id.slice(0, 8)}.pdf`;
+    
+    console.log(`[PDF API] Generated PDF: ${pdfBytes.length} bytes, filename: ${filename}`);
+    
+    // Return the PDF with proper headers for browser viewing
+    return new NextResponse(Buffer.from(pdfBytes), {
+      status: 200,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${filename}"`,
+        'Content-Length': pdfBytes.length.toString(),
+        'Cache-Control': 'private, max-age=0',
         'Access-Control-Allow-Origin': '*',
       },
     });
     
   } catch (error) {
-    console.error('Error generating PDF data:', error);
+    console.error('[PDF API] Error generating PDF:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        error: 'Failed to generate PDF',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 

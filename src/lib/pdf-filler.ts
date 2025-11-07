@@ -113,7 +113,14 @@ export async function fillI9PDF(formData: I9Form, employerData: Employer): Promi
     
     // Personal Info
     fillTextField(form, 'Date of Birth mmddyyyy', formatDateMMDDYYYY(formData.date_of_birth), true);
-    fillTextField(form, 'US Social Security Number', formData.ssn);
+    
+    // Clean SSN: remove dashes and validate 9 digits
+    const cleanSSN = formData.ssn ? formData.ssn.replace(/[^0-9]/g, '') : undefined;
+    if (cleanSSN && cleanSSN.length !== 9) {
+      console.warn(`⚠ Warning: SSN should be 9 digits, got ${cleanSSN.length}: "${cleanSSN}"`);
+    }
+    fillTextField(form, 'US Social Security Number', cleanSSN);
+    
     fillTextField(form, 'Employees E-mail Address', formData.email, true);
     fillTextField(form, 'Telephone Number', formData.phone, true);
     

@@ -4,11 +4,51 @@ import { updateI9FormSchema } from '@/lib/validations';
 import type { I9Form } from '@/lib/types';
 import { I9FormStatus } from '@/lib/types';
 import { ZodError } from 'zod';
+import { fillI9PDF, createSampleEmployer } from '@/lib/pdf-filler';
+import { sendI9ApprovedSMS, sendI9RejectedSMS } from '@/lib/telnyx';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 
 interface RouteParams {
   params: Promise<{
     id: string;
   }>;
+}
+
+// Note: SMS functions now handled by centralized Telnyx helpers
+
+// PDF Generation and Storage Function
+async function generateAndStorePDF(formData: I9Form): Promise<string | null> {
+  try {
+    console.log(`[PDF] Generating PDF for form ${formData.id}`);
+    
+    // Use sample employer data (in production, fetch from company database)
+    const employerData = createSampleEmployer();
+    
+    // Generate PDF bytes
+    const pdfBytes = await fillI9PDF(formData, employerData);
+    
+    // Create filename and save to public directory for serving
+    const filename = `I9-Form-${formData.last_name}-${formData.first_name}-${formData.id.slice(0, 8)}.pdf`;
+    const filePath = join(process.cwd(), 'public', 'generated-pdfs', filename);
+    
+    // Ensure directory exists
+    const { mkdirSync } = await import('fs');
+    mkdirSync(join(process.cwd(), 'public', 'generated-pdfs'), { recursive: true });
+    
+    // Save PDF file
+    writeFileSync(filePath, pdfBytes);
+    
+    // Return URL for accessing the PDF
+    const pdfUrl = `/generated-pdfs/${filename}`;
+    
+    console.log(`[PDF] Generated and saved: ${filename} (${pdfBytes.length} bytes)`);
+    return pdfUrl;
+    
+  } catch (error) {
+    console.error('[PDF] Failed to generate PDF:', error);
+    return null;
+  }
 }
 
 export async function GET(
@@ -242,24 +282,72 @@ async function approveData(id: string, currentForm: any, request: NextRequest): 
     );
   }
   
-  const body = await request.json();
-  const reviewedBy = body.reviewed_by || 'system';
-  
-  const result = await query(`
-    UPDATE i9_forms 
-    SET status = $1, 
-        employer_reviewed_at = NOW(), 
-        employer_reviewed_by = $2,
-        updated_at = NOW() 
-    WHERE id = $3 
-    RETURNING *
-  `, [I9FormStatus.DATA_APPROVED, reviewedBy, id]);
-  
-  return NextResponse.json({
-    success: true,
-    message: 'Data approved successfully',
-    form: result.rows[0]
-  });
+  try {
+    const body = await request.json();
+    const reviewedBy = body.reviewed_by || 'system';
+    
+    console.log(`[HR Approval] Approving data for form ${id}`);
+    
+    // Step 1: Update status in database
+    const result = await query(`
+      UPDATE i9_forms 
+      SET status = $1, 
+          employer_reviewed_at = NOW(), 
+          employer_reviewed_by = $2,
+          updated_at = NOW() 
+      WHERE id = $3 
+      RETURNING *
+    `, [I9FormStatus.DATA_APPROVED, reviewedBy, id]);
+    
+    const updatedForm: I9Form = {
+      ...result.rows[0],
+      date_of_birth: new Date(result.rows[0].date_of_birth),
+      created_at: new Date(result.rows[0].created_at),
+      updated_at: new Date(result.rows[0].updated_at),
+      completed_at: result.rows[0].completed_at ? new Date(result.rows[0].completed_at) : null,
+      employer_reviewed_at: result.rows[0].employer_reviewed_at ? new Date(result.rows[0].employer_reviewed_at) : null,
+      employee_signature_date: result.rows[0].employee_signature_date ? new Date(result.rows[0].employee_signature_date) : null,
+      alien_expiration_date: result.rows[0].alien_expiration_date ? new Date(result.rows[0].alien_expiration_date) : null
+    };
+    
+    // Step 2: Generate PDF and save to file system
+    const pdfUrl = await generateAndStorePDF(updatedForm);
+    
+    // Step 3: Send SMS notification with PDF link
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const fullPdfUrl = pdfUrl ? `${baseUrl}${pdfUrl}` : '';
+    
+    let smsSuccess = false;
+    if (fullPdfUrl) {
+      smsSuccess = await sendI9ApprovedSMS(updatedForm.phone, fullPdfUrl);
+    } else {
+      console.warn('[HR Approval] PDF generation failed, sending approval SMS without PDF link');
+      // Fallback: send approval SMS without PDF
+      smsSuccess = await sendI9ApprovedSMS(updatedForm.phone, 'PDF generation failed - please contact HR');
+    }
+    
+    console.log(`[HR Approval] Form ${id} approved successfully. PDF: ${pdfUrl ? 'Generated' : 'Failed'}, SMS: ${smsSuccess ? 'Sent' : 'Failed'}`);
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Data approved successfully',
+      form: updatedForm,
+      pdf_url: pdfUrl,
+      pdf_generated: !!pdfUrl,
+      sms_sent: smsSuccess,
+      notification_details: {
+        recipient: updatedForm.phone,
+        pdf_url: fullPdfUrl
+      }
+    });
+    
+  } catch (error) {
+    console.error('[HR Approval] Error in approval workflow:', error);
+    return NextResponse.json(
+      { error: 'Failed to complete approval workflow' },
+      { status: 500 }
+    );
+  }
 }
 
 async function requestCorrections(id: string, currentForm: any, request: NextRequest): Promise<NextResponse> {
@@ -271,33 +359,57 @@ async function requestCorrections(id: string, currentForm: any, request: NextReq
     );
   }
   
-  const body = await request.json();
-  
-  if (!body.employer_notes || body.employer_notes.trim() === '') {
+  try {
+    const body = await request.json();
+    
+    if (!body.employer_notes || body.employer_notes.trim() === '') {
+      return NextResponse.json(
+        { error: 'employer_notes is required when requesting corrections' },
+        { status: 400 }
+      );
+    }
+    
+    const reviewedBy = body.reviewed_by || 'system';
+    
+    console.log(`[HR Corrections] Requesting corrections for form ${id}`);
+    
+    // Step 1: Update status in database
+    const result = await query(`
+      UPDATE i9_forms 
+      SET status = $1, 
+          employer_notes = $2,
+          employer_reviewed_at = NOW(), 
+          employer_reviewed_by = $3,
+          updated_at = NOW() 
+      WHERE id = $4 
+      RETURNING *
+    `, [I9FormStatus.NEEDS_CORRECTION, body.employer_notes, reviewedBy, id]);
+    
+    const updatedForm = result.rows[0];
+    
+    // Step 2: Send SMS notification with correction details
+    const smsSuccess = await sendI9RejectedSMS(updatedForm.phone, body.employer_notes);
+    
+    console.log(`[HR Corrections] Form ${id} correction request sent. SMS: ${smsSuccess ? 'Sent' : 'Failed'}`);
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Corrections requested successfully',
+      form: updatedForm,
+      sms_sent: smsSuccess,
+      notification_details: {
+        recipient: updatedForm.phone,
+        correction_notes: body.employer_notes
+      }
+    });
+    
+  } catch (error) {
+    console.error('[HR Corrections] Error in correction workflow:', error);
     return NextResponse.json(
-      { error: 'employer_notes is required when requesting corrections' },
-      { status: 400 }
+      { error: 'Failed to complete correction request workflow' },
+      { status: 500 }
     );
   }
-  
-  const reviewedBy = body.reviewed_by || 'system';
-  
-  const result = await query(`
-    UPDATE i9_forms 
-    SET status = $1, 
-        employer_notes = $2,
-        employer_reviewed_at = NOW(), 
-        employer_reviewed_by = $3,
-        updated_at = NOW() 
-    WHERE id = $4 
-    RETURNING *
-  `, [I9FormStatus.NEEDS_CORRECTION, body.employer_notes, reviewedBy, id]);
-  
-  return NextResponse.json({
-    success: true,
-    message: 'Corrections requested successfully',
-    form: result.rows[0]
-  });
 }
 
 async function verifyFinal(id: string, currentForm: any, request: NextRequest): Promise<NextResponse> {

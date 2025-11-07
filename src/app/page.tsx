@@ -214,27 +214,22 @@ export default function Home() {
     
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/i9/${form.id}/pdf`);
       
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
-      }
-
-      const data = await response.json();
-      console.log('PDF data:', data);
+      // Open PDF in new tab
+      const pdfUrl = `/api/i9/${form.id}/pdf`;
+      window.open(pdfUrl, '_blank');
       
-      // TODO: Implement actual PDF download when pdf-lib is integrated
       setSnackbar({
         open: true,
-        message: `PDF generated for ${form.first_name} ${form.last_name}`,
+        message: `PDF opened for ${form.first_name} ${form.last_name}`,
         severity: 'success'
       });
       setSelectedForm(null); // Close modal
     } catch (err) {
-      console.error('Error downloading PDF:', err);
+      console.error('Error opening PDF:', err);
       setSnackbar({
         open: true,
-        message: 'Failed to download PDF. Please try again.',
+        message: 'Failed to open PDF. Please try again.',
         severity: 'error'
       });
     } finally {

@@ -10,7 +10,10 @@
     "db:init": "tsx src/scripts/init-db.ts",
     "db:seed": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/seed-test-data.ts",
     "inspect:pdf": "tsx src/scripts/inspect-pdf-fields.ts",
-    "test:pdf": "tsx src/scripts/test-pdf-filler.ts"
+    "test:pdf": "tsx src/scripts/test-pdf-filler.ts",
+    "test:form": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-form-submission.ts",
+    "test:approval": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-approval-workflow.ts",
+    "test:mcp": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-mcp-tools.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -23,6 +26,7 @@
     "@vercel/postgres": "^0.10.0",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "next": "16.0.1",
     "pdf-lib": "^1.17.1",
     "react": "19.2.0",
