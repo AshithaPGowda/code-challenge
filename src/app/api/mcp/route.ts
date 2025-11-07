@@ -154,11 +154,7 @@ const handler = createMcpHandler(
       },
     );
   },
-  {
-    name: 'i9-voice-assistant',
-    version: '1.0.0',
-    description: 'MCP server for I-9 Employment Eligibility Verification voice assistant'
-  },
+  {}, // Server options (empty for default)
   { basePath: '/api' },
 );
 
