@@ -4,7 +4,20 @@ import { join } from 'path';
 import { I9Form, Employer, CitizenshipStatus } from './types';
 
 /**
- * Format date as MMDDYYYY for PDF fields
+ * Format date as MM/DD/YYYY for PDF fields (American standard)
+ */
+function formatDateAmerican(date: Date | null | undefined): string {
+  if (!date) return '';
+  
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const year = date.getFullYear().toString();
+  
+  return `${month}/${day}/${year}`;
+}
+
+/**
+ * Format date as MMDDYYYY for PDF fields (without slashes)
  */
 function formatDateMMDDYYYY(date: Date | null | undefined): string {
   if (!date) return '';
@@ -112,7 +125,7 @@ export async function fillI9PDF(formData: I9Form, employerData: Employer): Promi
     fillTextField(form, 'ZIP Code', formData.zip_code, true);
     
     // Personal Info
-    fillTextField(form, 'Date of Birth mmddyyyy', formatDateMMDDYYYY(formData.date_of_birth), true);
+    fillTextField(form, 'Date of Birth mmddyyyy', formatDateAmerican(formData.date_of_birth), true);
     
     // Clean SSN: remove dashes and validate 9 digits
     const cleanSSN = formData.ssn ? formData.ssn.replace(/[^0-9]/g, '') : undefined;
@@ -139,7 +152,7 @@ export async function fillI9PDF(formData: I9Form, employerData: Employer): Promi
     }
     
     if (citizenship === CitizenshipStatus.AUTHORIZED_ALIEN) {
-      fillTextField(form, 'Exp Date mmddyyyy', formatDateMMDDYYYY(formData.alien_expiration_date));
+      fillTextField(form, 'Exp Date mmddyyyy', formatDateAmerican(formData.alien_expiration_date));
       
       // Fill one of the three possible fields for authorized aliens
       if (formData.uscis_a_number) {
@@ -158,7 +171,7 @@ export async function fillI9PDF(formData: I9Form, employerData: Employer): Promi
       ? `Signed via voice on ${formData.completed_at.toLocaleDateString()}`
       : 'Signed via voice';
     fillTextField(form, 'Signature of Employee', signatureText);
-    fillTextField(form, "Today's Date mmddyyy", formatDateMMDDYYYY(formData.completed_at || new Date()));
+    fillTextField(form, "Today's Date mmddyyy", formatDateAmerican(formData.completed_at || new Date()));
     
     // Section 2: Employer Information
     console.log('\\n🏢 Filling Section 2 - Employer Information');
@@ -183,7 +196,7 @@ export async function fillI9PDF(formData: I9Form, employerData: Employer): Promi
     
     // Dates
     const currentDate = new Date();
-    fillTextField(form, 'S2 Todays Date mmddyyyy', formatDateMMDDYYYY(currentDate));
+    fillTextField(form, 'S2 Todays Date mmddyyyy', formatDateAmerican(currentDate));
     fillTextField(form, 'FirstDayEmployed mmddyyyy', ''); // Leave blank or fill with start date if available
     
     console.log('\\n🔒 Flattening form to make it read-only');
