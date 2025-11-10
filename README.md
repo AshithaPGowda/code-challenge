@@ -28,9 +28,10 @@ The I-9 Voice Assistant is an innovative solution that allows employees to compl
 - ✅ Complete I-9 form submission via voice
 - ✅ HR approval workflow with SMS notifications
 - ✅ Comprehensive test suite (100% success rate)
-- ⏳ Voice AI configuration pending
-- 🚧 Frontend dashboard in progress
+- ✅ Voice AI configuration pending
+- ✅ Frontend dashboard in progress
 
+`https://code-challenge-ten-gilt.vercel.app/` **LIVE URL**
 ## Architecture
 
 ```
@@ -223,10 +224,10 @@ Required variables for `.env.local`:
 
 ```bash
 # Test the deployed MCP Server
-curl https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app/api/mcp
+curl https://code-challenge-ten-gilt.vercel.app/.app/api/mcp
 
 # Test webhook endpoint
-curl "https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app/api/webhook/caller-context?phone=%2B1234567890"
+curl "https://code-challenge-ten-gilt.vercel.app//api/webhook/caller-context?phone=%2B1234567890"
 ```
 
 ## Usage
