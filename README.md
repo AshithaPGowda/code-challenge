@@ -23,15 +23,17 @@ The I-9 Voice Assistant is an innovative solution that allows employees to compl
 
 - ✅ Backend APIs complete
 - ✅ Database schema deployed  
-- ✅ MCP server operational with 7 tools
+- ✅ MCP server operational with 8 tools
 - ✅ Telnyx SMS integration complete
 - ✅ Complete I-9 form submission via voice
 - ✅ HR approval workflow with SMS notifications
 - ✅ Comprehensive test suite (100% success rate)
-- ✅ Voice AI configuration pending
-- ✅ Frontend dashboard in progress
+- ✅ Voice AI configuration complete
+- ✅ Frontend dashboard with Material-UI
+- ✅ PDF generation for completed I-9 forms
+- ✅ CI/CD pipeline with GitHub Actions
 
-`https://code-challenge-ten-gilt.vercel.app/` **LIVE URL**
+**LIVE URL:** `https://code-challenge-ten-gilt.vercel.app/`
 ## Architecture
 
 ```
@@ -53,13 +55,14 @@ The I-9 Voice Assistant is an innovative solution that allows employees to compl
 - **Database**: Neon Postgres with connection pooling
 - **AI**: Telnyx Voice AI with MCP integration
 - **Validation**: Zod schemas with custom validators
-- **Deployment**: Vercel - https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app
+- **Deployment**: Vercel with CI/CD - https://code-challenge-ten-gilt.vercel.app
 - **Development**: tsx, ESLint, TypeScript
 
 ## Features
 
 - ✅ **Voice-driven I-9 form completion** - Complete Section 1 via phone
-- ✅ **MCP server with 6 custom tools** - Specialized voice assistant capabilities
+- ✅ **MCP server with 8 custom tools** - Specialized voice assistant capabilities
+- ✅ **PDF form generation** - Auto-filled I-9 PDFs with employee data
 - ✅ **Dynamic webhook for caller context** - Personalized conversation flow
 - ✅ **Real-time validation** - SSN, phone, citizenship status, ZIP codes
 - ✅ **Progress tracking** - Resume incomplete forms, track completion status
@@ -70,7 +73,7 @@ The I-9 Voice Assistant is an innovative solution that allows employees to compl
 
 ## MCP Tools
 
-The system includes 7 specialized MCP tools for voice assistant integration:
+The system includes 8 specialized MCP tools for voice assistant integration:
 
 1. **`validate_ssn`** - Validates Social Security Number format (XXX-XX-XXXX)
 2. **`validate_citizenship_status`** - Ensures valid citizenship status selection
@@ -96,6 +99,7 @@ Each tool returns structured responses: `{ success: boolean, data?: any, error?:
 - **POST** `/api/i9` - Create new I-9 form
 - **GET** `/api/i9?employee_id=XXX` - Get all forms for employee
 - **GET** `/api/i9/[id]` - Get form by ID
+- **GET** `/api/i9/[id]/pdf` - Generate filled PDF for completed form
 - **PUT** `/api/i9/[id]` - Update entire form
 - **PATCH** `/api/i9/[id]` - Update form status only
 - **DELETE** `/api/i9/[id]` - Delete form
@@ -104,6 +108,10 @@ Each tool returns structured responses: `{ success: boolean, data?: any, error?:
 - **GET** `/api/webhook/caller-context?phone=XXX` - Get caller context for AI
 - **POST** `/api/mcp` - MCP server endpoint for tool execution
 - **GET** `/api/mcp` - MCP server capabilities
+
+### Administration
+- **POST** `/api/admin/clean-duplicates` - Clean duplicate employee records
+- **GET** `/api/test` - Health check endpoint
 
 ## Database Schema
 
@@ -151,9 +159,15 @@ i9_forms (
   foreign_passport_number VARCHAR(50),
   country_of_issuance VARCHAR(100),
   
-  -- Metadata
+  -- Workflow Fields
   status VARCHAR(20) DEFAULT 'in_progress',
   completed_at TIMESTAMP,
+  submitted_for_approval BOOLEAN DEFAULT FALSE,
+  approved_by VARCHAR(100),
+  approved_at TIMESTAMP,
+  approval_notes TEXT,
+  
+  -- Metadata
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 )
@@ -224,10 +238,10 @@ Required variables for `.env.local`:
 
 ```bash
 # Test the deployed MCP Server
-curl https://code-challenge-ten-gilt.vercel.app/.app/api/mcp
+curl https://code-challenge-ten-gilt.vercel.app/api/mcp
 
 # Test webhook endpoint
-curl "https://code-challenge-ten-gilt.vercel.app//api/webhook/caller-context?phone=%2B1234567890"
+curl "https://code-challenge-ten-gilt.vercel.app/api/webhook/caller-context?phone=%2B1234567890"
 ```
 
 ## Usage
@@ -265,30 +279,48 @@ curl -X POST http://localhost:3000/api/mcp \
 
 ```
 code-challenge/
+├── .github/
+│   └── workflows/
+│       └── build-check.yml    # CI/CD pipeline
 ├── src/
 │   ├── app/
 │   │   ├── api/
+│   │   │   ├── admin/
+│   │   │   │   └── clean-duplicates/route.ts
 │   │   │   ├── employees/
 │   │   │   │   ├── route.ts
 │   │   │   │   └── [id]/route.ts
 │   │   │   ├── i9/
 │   │   │   │   ├── route.ts
-│   │   │   │   └── [id]/route.ts
-│   │   │   ├── mcp/
-│   │   │   │   └── route.ts
+│   │   │   │   └── [id]/
+│   │   │   │       ├── route.ts
+│   │   │   │       └── pdf/route.ts
+│   │   │   ├── mcp/route.ts
+│   │   │   ├── test/route.ts
 │   │   │   └── webhook/
-│   │   │       └── caller-context/route.ts
+│   │   │       └── caller-context/
+│   │   │           ├── route.ts
+│   │   │           └── [phone_number]/route.ts
+│   │   ├── components/         # React components
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── lib/
 │   │   ├── db.ts              # Database connection
-│   │   ├── types.ts           # TypeScript interfaces
-│   │   ├── validations.ts     # Zod schemas
 │   │   ├── mcp-tools.ts       # MCP tool implementations
-│   │   └── schema.sql         # Database schema
-│   └── scripts/
-│       └── init-db.ts         # Database initialization and more
+│   │   ├── pdf-filler.ts      # PDF generation utilities
+│   │   ├── schema.sql         # Database schema
+│   │   ├── telnyx.ts          # SMS/Voice integrations
+│   │   ├── types.ts           # TypeScript interfaces
+│   │   └── validations.ts     # Zod schemas
+│   └── scripts/               # Development & testing scripts
+│       ├── init-db.ts
+│       ├── test-*.ts
+│       └── migrate-*.sql
+├── public/
+│   ├── templates/
+│   │   └── i9-template.pdf    # Blank I-9 form template
+│   └── generated-pdfs/        # Completed forms
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
