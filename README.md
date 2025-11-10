@@ -222,7 +222,7 @@ Required variables for `.env.local`:
 ## Quick Start (For Demo/Testing)
 
 ```bash
-# Test the deployed API
+# Test the deployed MCP Server
 curl https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app/api/mcp
 
 # Test webhook endpoint
@@ -241,7 +241,7 @@ curl "https://code-challenge-bt2zp8nzm-ashithapgowdas-projects.vercel.app/api/we
 
 ### For Developers
 
-**API Testing:**
+**API Testing: LOCAL**
 ```bash
 # Create employee
 curl -X POST http://localhost:3000/api/employees \
@@ -287,7 +287,7 @@ code-challenge/
 │   │   ├── mcp-tools.ts       # MCP tool implementations
 │   │   └── schema.sql         # Database schema
 │   └── scripts/
-│       └── init-db.ts         # Database initialization
+│       └── init-db.ts         # Database initialization and more
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
@@ -309,7 +309,7 @@ console.log(result);
 Use tools like Postman, Insomnia, or curl to test all endpoints with the examples provided in the Usage section.
 
 ### Mock Phone Call Simulation
-*Pending Telnyx integration - will include simulation scripts*
+*call phone : `+1-443-978-6106` to reach the assistant*
 
 ## Demo Script
 
@@ -401,7 +401,7 @@ MIT License - see LICENSE file for details
 
 **Ashitha Gowda**  
 - GitHub: ashithapgowda
-- Challenge Submission Date: November 4, 2025  
+- Challenge Submission Date: November 10, 2025  
 Built for Telnyx Coding Challenge 2025
 
 ---
