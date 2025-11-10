@@ -13,7 +13,8 @@
     "test:pdf": "tsx src/scripts/test-pdf-filler.ts",
     "test:form": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-form-submission.ts",
     "test:approval": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-approval-workflow.ts",
-    "test:mcp": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-mcp-tools.ts"
+    "test:mcp": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-mcp-tools.ts",
+    "test:save-field": "POSTGRES_URL=\"$(grep '^POSTGRES_URL=' .env.local | cut -d'=' -f2- | tr -d '\"')\" tsx src/scripts/test-save-i9-field.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
